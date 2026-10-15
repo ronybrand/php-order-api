@@ -6,7 +6,7 @@ RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist --no-in
 COPY . .
 RUN composer dump-autoload --no-dev --optimize --classmap-authoritative --no-scripts
 
-FROM php:8.4-fpm-alpine
+FROM php:8.5-fpm-alpine
 RUN apk add --no-cache --virtual .build-deps postgresql-dev $PHPIZE_DEPS \
     && apk add --no-cache libpq \
     && docker-php-ext-install pdo_pgsql sockets opcache \
