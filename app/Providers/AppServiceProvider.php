@@ -11,6 +11,8 @@ use App\Application\OrderService;
 use App\Application\Store;
 use App\Auth\JwtVerifier;
 use App\Config\Settings;
+use App\Infrastructure\Messaging\AmqpPublisher;
+use App\Infrastructure\Messaging\NullPublisher;
 use App\Infrastructure\Postgres\PostgresHealth;
 use App\Infrastructure\Postgres\PostgresStore;
 use Illuminate\Contracts\Foundation\Application;
@@ -47,9 +49,14 @@ final class AppServiceProvider extends ServiceProvider
         });
 
         // The publisher is optional: without a broker the API still works, it just does not notify.
+        $this->app->singleton(EventPublisher::class, static function (Application $app): EventPublisher {
+            $broker = $app->make(Settings::class)->brokerUrl;
+
+            return $broker === '' ? new NullPublisher() : new AmqpPublisher($broker);
+        });
         $this->app->singleton(OrderService::class, static fn(Application $app): OrderService => new OrderService(
             $app->make(Store::class),
-            $app->bound(EventPublisher::class) ? $app->make(EventPublisher::class) : null,
+            $app->make(EventPublisher::class),
             $app->make(ClockInterface::class),
             $app->make(LoggerInterface::class),
         ));

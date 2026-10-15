@@ -80,6 +80,16 @@ final class SettingsTest extends TestCase
         }
     }
 
+    public function test_smtp_settings_have_a_default_port_and_stay_out_of_debug_output(): void
+    {
+        $settings = Settings::fromEnvironment(['SMTP_USER' => 'mailer', 'SMTP_PASSWORD' => 'hunter2']);
+
+        self::assertSame(587, $settings->smtpPort);
+        self::assertSame('mailer', $settings->smtpUser);
+        self::assertStringNotContainsString('hunter2', print_r($settings, true));
+        self::assertStringNotContainsString('hunter2', (string) json_encode($settings));
+    }
+
     public function test_a_malformed_integer_is_refused(): void
     {
         $this->expectException(InvalidConfiguration::class);

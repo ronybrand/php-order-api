@@ -8,7 +8,7 @@ namespace App\Config;
  * The service settings read from environment variables, with the production rules that make an unsafe
  * combination fail at startup. Parsing and validation are pure so they are tested without the framework.
  */
-final readonly class Settings
+final readonly class Settings implements \JsonSerializable
 {
     public const string DEVELOPMENT = 'development';
     public const string PRODUCTION = 'production';
@@ -31,6 +31,10 @@ final readonly class Settings
         public int $rateLimitPerIp,
         public string $brokerUrl,
         public string $smtpHost,
+        public int $smtpPort,
+        public string $smtpUser,
+        #[\SensitiveParameter]
+        private string $smtpPassword,
         public string $smtpFrom,
     ) {}
 
@@ -67,6 +71,9 @@ final readonly class Settings
             $integer('RATE_LIMIT_PER_IP', 600),
             $string('BROKER_URL'),
             $string('SMTP_HOST'),
+            $integer('SMTP_PORT', 587),
+            $string('SMTP_USER'),
+            $string('SMTP_PASSWORD'),
             $string('SMTP_FROM'),
         );
         self::refuse($errors);
@@ -74,9 +81,26 @@ final readonly class Settings
         return $settings;
     }
 
+    /** @return array{environment: string} */
+    public function jsonSerialize(): array
+    {
+        return ['environment' => $this->environment];
+    }
+
     public function isProduction(): bool
     {
         return $this->environment === self::PRODUCTION;
+    }
+
+    public function smtpPassword(): string
+    {
+        return $this->smtpPassword;
+    }
+
+    /** Keeps the SMTP password out of print_r/var_dump output. */
+    public function __debugInfo(): array
+    {
+        return ['environment' => $this->environment];
     }
 
     /** STARTTLS is mandatory in production: credentials and mail never travel in clear text. */
