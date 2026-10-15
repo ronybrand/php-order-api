@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Domain\Error\ErrorCode;
-use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\Route as RouteFacade;
 use Tests\TestCase;
 
@@ -53,7 +52,6 @@ final class OpenApiTest extends TestCase
     {
         $operations = [];
         foreach (RouteFacade::getRoutes()->getRoutes() as $route) {
-            \assert($route instanceof Route);
             // the document names the item parameter in snake_case like every other field of the API
             $uri = str_replace('{itemId}', '{item_id}', '/' . ltrim($route->uri(), '/'));
             foreach ($route->methods() as $method) {

@@ -7,6 +7,7 @@ namespace Tests\Feature;
 use App\Application\EventPublisher;
 use App\Config\Settings;
 use App\Infrastructure\Messaging\AmqpPublisher;
+use Illuminate\Testing\PendingCommand;
 use Tests\TestCase;
 
 final class WorkerWiringTest extends TestCase
@@ -15,9 +16,10 @@ final class WorkerWiringTest extends TestCase
     {
         $this->app->instance(Settings::class, Settings::fromEnvironment(['APP_ENV' => 'testing']));
 
-        $this->artisan('orders:work')
-            ->expectsOutputToContain('BROKER_URL is required')
-            ->assertFailed();
+        $command = $this->artisan('orders:work');
+
+        self::assertInstanceOf(PendingCommand::class, $command);
+        $command->expectsOutputToContain('BROKER_URL is required')->assertFailed();
     }
 
     public function test_the_api_publishes_through_rabbitmq_only_when_a_broker_is_configured(): void

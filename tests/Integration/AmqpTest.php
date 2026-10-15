@@ -16,6 +16,7 @@ use App\Infrastructure\Messaging\SeenSet;
 use Brick\Math\BigDecimal;
 use DateTimeImmutable;
 use PhpAmqpLib\Message\AMQPMessage;
+use PhpAmqpLib\Wire\AMQPTable;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 use RuntimeException;
@@ -102,7 +103,9 @@ final class AmqpTest extends TestCase
         $dead = $this->deadLetter();
 
         self::assertNotNull($dead);
-        self::assertNotSame('', (string) $dead->get('message_id'));
+        $messageId = $dead->get('message_id');
+        self::assertIsString($messageId);
+        self::assertNotSame('', $messageId);
         self::assertSame(1, count($notifier->events), 'a permanent failure must not be retried');
     }
 
@@ -116,8 +119,9 @@ final class AmqpTest extends TestCase
 
         self::assertNotNull($dead);
         self::assertSame(Processor::MAX_RETRIES + 1, count($notifier->events));
-        $headers = $dead->get('application_headers')->getNativeData();
-        self::assertSame(Processor::MAX_RETRIES, $headers['x-retry-count']);
+        $table = $dead->get('application_headers');
+        self::assertInstanceOf(AMQPTable::class, $table);
+        self::assertSame(Processor::MAX_RETRIES, $table->getNativeData()['x-retry-count']);
         $channel = AmqpConnection::open($this->url)->channel();
         self::assertNull($channel->basic_get(Processor::QUEUE), 'the original must have been acked after the DLQ publish');
     }

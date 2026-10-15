@@ -50,19 +50,29 @@ final class OrdersWork extends Command implements SignalableCommandInterface
         $processor = new Processor(new EmailNotifier($mailer), new SeenSet($clock), $logger);
         $consumer = new AmqpConsumer($settings->brokerUrl, $processor, $logger);
 
-        while (!$this->stopping) {
+        while (!$this->isStopping()) {
             try {
-                $consumer->consume(fn(): bool => $this->stopping);
+                $consumer->consume($this->isStopping(...));
             } catch (Throwable $e) {
                 // The broker went away: log and reconnect. The exception class is enough, URLs can carry credentials.
                 $logger->error('consumer stopped, reconnecting', ['exception' => $e::class]);
-                for ($waited = 0; $waited < self::RECONNECT_DELAY_SECONDS && !$this->stopping; ++$waited) {
+                for ($waited = 0; $waited < self::RECONNECT_DELAY_SECONDS && !$this->isStopping(); ++$waited) {
                     sleep(1);
                 }
             }
         }
 
         return self::SUCCESS;
+    }
+
+    /**
+     * Read through a method: the flag is flipped by the signal handler, outside the loop's flow.
+     *
+     * @phpstan-impure
+     */
+    private function isStopping(): bool
+    {
+        return $this->stopping;
     }
 
     /** @return list<int> SIGINT and SIGTERM, only where the pcntl extension exists */

@@ -18,8 +18,10 @@ final class SearchApiTest extends ApiTestCase
         self::assertSame(2, $body['total']);
         self::assertSame(1, $body['page']);
         self::assertSame(1, $body['size']);
-        self::assertIsArray($body['items']);
-        self::assertSame(['id', 'name'], array_keys((array) (is_array($body['items']) ? $body['items'][0] : [])));
+        $items = $body['items'];
+        self::assertIsArray($items);
+        self::assertIsArray($items[0]);
+        self::assertSame(['id', 'name'], array_keys($items[0]));
     }
 
     public function test_get_search_rejects_non_numeric_paging(): void
