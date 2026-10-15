@@ -10,3 +10,8 @@ parameters:
         - routes
         - tests
     tmpDir: .phpstan.cache
+    ignoreErrors:
+        # Laravel's TestResponse proxies Response methods through @mixin: PHPStan reads those proxied calls as
+        # static ones. A false positive of the framework's test helpers, so it is limited to the tests.
+        - identifier: staticMethod.dynamicCall
+          path: tests/*
