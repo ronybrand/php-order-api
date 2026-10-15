@@ -35,7 +35,8 @@ return [
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app/private'),
-            'serve' => true,
+            // The API serves no files: the framework's /storage route must not exist (OpenApiTest keeps it out)
+            'serve' => false,
             'throw' => false,
             'report' => false,
         ],
