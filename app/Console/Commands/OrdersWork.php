@@ -6,7 +6,6 @@ namespace App\Console\Commands;
 
 use App\Config\InvalidConfiguration;
 use App\Console\StopSignal;
-use App\Console\StopSignal;
 use App\Config\Settings;
 use App\Infrastructure\Messaging\AmqpConsumer;
 use App\Infrastructure\Messaging\EmailNotifier;
