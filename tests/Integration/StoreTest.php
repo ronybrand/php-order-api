@@ -18,6 +18,7 @@ use App\Infrastructure\Postgres\PostgresStore;
 use Brick\Math\BigDecimal;
 use DateTimeImmutable;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\ConfigurationUrlParser;
 use Illuminate\Support\Facades\DB;
 use Ramsey\Uuid\Uuid;
 
@@ -234,7 +235,9 @@ final class StoreTest extends DatabaseTestCase
         // must exclude the other, seen here from a second connection that gives up after 300 ms.
         $customer = $this->newCustomer();
         $id = (string) $customer->id;
-        $other = DB::connectUsing('second', (array) config('database.connections.pgsql'), true);
+        // connectUsing skips the DB_URL parsing the default connection goes through, so do it here.
+        $config = (new ConfigurationUrlParser())->parseConfiguration((array) config('database.connections.pgsql'));
+        $other = DB::connectUsing('second', $config, true);
         $other->statement("SET lock_timeout = '300ms'");
         $otherStore = new PostgresStore($other);
 
