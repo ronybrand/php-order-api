@@ -14,5 +14,6 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/). 
 ### Security
 
 - Actions fixadas por SHA, Dependabot semanal com auto-merge de patch e minor, `composer audit` no CI.
+- Trivy no CI: varre a imagem Docker e o repositório (`composer.lock`, segredos commitados, Dockerfile) e falha em HIGH/CRITICAL com correção disponível.
 - A resposta de cliente expõe só `id` e `name`; documento, passaporte e e-mail ficam fora da API e dos logs.
 - A rota `/storage` do framework foi desligada: a API não serve arquivos.
