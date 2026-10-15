@@ -145,6 +145,12 @@ final class Order
         return $this->transitionTo(OrderStatus::Canceled, $actor, $now);
     }
 
+    /** A copy must not share its items with the original: they are mutable entities of the aggregate. */
+    public function __clone(): void
+    {
+        $this->items = array_map(static fn(Item $item): Item => clone $item, $this->items);
+    }
+
     public function persisted(string $id): void
     {
         $this->id = $id;

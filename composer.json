@@ -10,7 +10,9 @@
         "brick/math": "^0.14",
         "firebase/php-jwt": "^7.0",
         "laravel/framework": "^13.17",
-        "php-amqplib/php-amqplib": "^3.7"
+        "php-amqplib/php-amqplib": "^3.7",
+        "psr/clock": "^1.0",
+        "symfony/clock": "^8.1"
     },
     "require-dev": {
         "larastan/larastan": "^3.0",
