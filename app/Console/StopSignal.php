@@ -14,6 +14,14 @@ final class StopSignal
         $this->requested = true;
     }
 
+    /** Waits up to $seconds, waking early (in one-second steps) once a stop was requested. */
+    public function sleep(int $seconds): void
+    {
+        for ($waited = 0; $waited < $seconds && !$this->requested; ++$waited) {
+            sleep(1);
+        }
+    }
+
     public function requested(): bool
     {
         return $this->requested;

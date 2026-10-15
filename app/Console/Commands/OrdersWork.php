@@ -63,9 +63,7 @@ final class OrdersWork extends Command implements SignalableCommandInterface
             } catch (Throwable $e) {
                 // The broker went away: log and reconnect. The exception class is enough, URLs can carry credentials.
                 $logger->error('consumer stopped, reconnecting', ['exception' => $e::class]);
-                for ($waited = 0; $waited < self::RECONNECT_DELAY_SECONDS && !$this->stop->requested(); ++$waited) {
-                    sleep(1);
-                }
+                $this->stop->sleep(self::RECONNECT_DELAY_SECONDS);
             }
         }
 
