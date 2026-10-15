@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Console\Commands;
 
 use App\Config\InvalidConfiguration;
+use App\Console\StopSignal;
+use App\Console\StopSignal;
 use App\Config\Settings;
 use App\Infrastructure\Messaging\AmqpConsumer;
 use App\Infrastructure\Messaging\EmailNotifier;
@@ -26,7 +28,13 @@ final class OrdersWork extends Command implements SignalableCommandInterface
 
     protected $description = 'Consume order status changes from RabbitMQ and send the notification e-mails';
 
-    private bool $stopping = false;
+    private readonly StopSignal $stop;
+
+    public function __construct()
+    {
+        parent::__construct();
+        $this->stop = new StopSignal();
+    }
 
     public function handle(Settings $settings, ClockInterface $clock, LoggerInterface $logger): int
     {
@@ -50,29 +58,19 @@ final class OrdersWork extends Command implements SignalableCommandInterface
         $processor = new Processor(new EmailNotifier($mailer), new SeenSet($clock), $logger);
         $consumer = new AmqpConsumer($settings->brokerUrl, $processor, $logger);
 
-        while (!$this->isStopping()) {
+        while (!$this->stop->requested()) {
             try {
-                $consumer->consume($this->isStopping(...));
+                $consumer->consume($this->stop->requested(...));
             } catch (Throwable $e) {
                 // The broker went away: log and reconnect. The exception class is enough, URLs can carry credentials.
                 $logger->error('consumer stopped, reconnecting', ['exception' => $e::class]);
-                for ($waited = 0; $waited < self::RECONNECT_DELAY_SECONDS && !$this->isStopping(); ++$waited) {
+                for ($waited = 0; $waited < self::RECONNECT_DELAY_SECONDS && !$this->stop->requested(); ++$waited) {
                     sleep(1);
                 }
             }
         }
 
         return self::SUCCESS;
-    }
-
-    /**
-     * Read through a method: the flag is flipped by the signal handler, outside the loop's flow.
-     *
-     * @phpstan-impure
-     */
-    private function isStopping(): bool
-    {
-        return $this->stopping;
     }
 
     /** @return list<int> SIGINT and SIGTERM, only where the pcntl extension exists */
@@ -83,7 +81,7 @@ final class OrdersWork extends Command implements SignalableCommandInterface
 
     public function handleSignal(int $signal, int|false $previousExitCode = 0): int|false
     {
-        $this->stopping = true;
+        $this->stop->request();
 
         return false;
     }
