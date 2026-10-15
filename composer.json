@@ -1,0 +1,53 @@
+{
+    "name": "ronybrand/php-order-api",
+    "description": "Order management API in PHP (port of the fastapi-order-api spec)",
+    "type": "project",
+    "license": "proprietary",
+    "require": {
+        "php": ">=8.4",
+        "ext-mbstring": "*",
+        "ext-openssl": "*",
+        "ext-pdo": "*",
+        "ext-pdo_pgsql": "*",
+        "brick/math": "^0.14",
+        "firebase/php-jwt": "^7.0",
+        "monolog/monolog": "^3.7",
+        "php-amqplib/php-amqplib": "^3.7",
+        "php-di/php-di": "^7.0",
+        "psr/clock": "^1.0",
+        "ramsey/uuid": "^4.7",
+        "slim/psr7": "^1.7",
+        "slim/slim": "^4.14",
+        "symfony/cache": "^7.3",
+        "symfony/clock": "^7.3",
+        "symfony/mailer": "^7.3",
+        "symfony/rate-limiter": "^7.3"
+    },
+    "require-dev": {
+        "friendsofphp/php-cs-fixer": "^3.64",
+        "phpstan/phpstan": "^2.0",
+        "phpstan/phpstan-strict-rules": "^2.0",
+        "phpunit/phpunit": "^11.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "App\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "sort-packages": true
+    },
+    "scripts": {
+        "test": "phpunit --testsuite unit",
+        "test:integration": "phpunit --testsuite integration",
+        "stan": "phpstan analyse",
+        "cs": "php-cs-fixer fix --dry-run --diff",
+        "cs:fix": "php-cs-fixer fix"
+    }
+}
