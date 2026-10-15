@@ -13,6 +13,9 @@ final readonly class Settings
     public const string DEVELOPMENT = 'development';
     public const string PRODUCTION = 'production';
 
+    /** Laravel's own names for non-production environments are accepted as development. */
+    private const array NON_PRODUCTION = ['development', 'local', 'testing'];
+
     /**
      * @param list<string> $corsOrigins
      */
@@ -86,8 +89,8 @@ final readonly class Settings
     public function assertValid(): void
     {
         $errors = [];
-        if (!in_array($this->environment, [self::DEVELOPMENT, self::PRODUCTION], true)) {
-            $errors[] = 'APP_ENV must be "development" or "production"';
+        if (!in_array($this->environment, [...self::NON_PRODUCTION, self::PRODUCTION], true)) {
+            $errors[] = 'APP_ENV must be "development", "local", "testing" or "production"';
         }
         if ($this->maxBodyBytes < 1) {
             $errors[] = 'MAX_BODY_BYTES must be positive';

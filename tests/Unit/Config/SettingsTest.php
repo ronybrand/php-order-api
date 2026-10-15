@@ -70,6 +70,16 @@ final class SettingsTest extends TestCase
         }
     }
 
+    public function test_laravel_local_and_testing_environments_are_accepted_as_non_production(): void
+    {
+        foreach (['development', 'local', 'testing'] as $environment) {
+            $settings = Settings::fromEnvironment(['APP_ENV' => $environment]);
+
+            $settings->assertValid();
+            self::assertFalse($settings->isProduction());
+        }
+    }
+
     public function test_a_malformed_integer_is_refused(): void
     {
         $this->expectException(InvalidConfiguration::class);

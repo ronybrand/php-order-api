@@ -13,6 +13,9 @@ use RuntimeException;
  */
 final class ApiException extends RuntimeException
 {
+    /** Seconds until a rate-limited caller may retry (sent as Retry-After). */
+    public private(set) ?int $retryAfter = null;
+
     /** @param array<string, mixed> $params */
     private function __construct(
         public readonly ErrorKind $kind,
@@ -21,6 +24,13 @@ final class ApiException extends RuntimeException
         public readonly array $params = [],
     ) {
         parent::__construct($message);
+    }
+
+    public function withRetryAfter(int $seconds): self
+    {
+        $this->retryAfter = $seconds;
+
+        return $this;
     }
 
     /** @param array<string, mixed> $params */
