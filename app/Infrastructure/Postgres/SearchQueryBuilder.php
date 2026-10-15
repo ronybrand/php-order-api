@@ -33,7 +33,7 @@ final class SearchQueryBuilder
                 continue;
             }
             foreach ($conditions as $condition) {
-                [$clause, $values] = $this->condition((string) $name, $field, $condition);
+                [$clause, $values] = $this->condition($name, $field, $condition);
                 $where[] = $clause;
                 array_push($bindings, ...$values);
             }
@@ -178,7 +178,10 @@ final class SearchQueryBuilder
             if (preg_match('/^\d{4}-\d{2}-\d{2}$/D', $value) === 1) {
                 $time = DateTimeImmutable::createFromFormat('!Y-m-d', $value, $utc);
             } else {
-                $time = DateTimeImmutable::createFromFormat(DATE_RFC3339_EXTENDED, $value) ?: DateTimeImmutable::createFromFormat(DATE_RFC3339, $value);
+                $time = DateTimeImmutable::createFromFormat(DATE_RFC3339_EXTENDED, $value);
+                if ($time === false) {
+                    $time = DateTimeImmutable::createFromFormat(DATE_RFC3339, $value);
+                }
             }
             if ($time !== false) {
                 return $time->setTimezone($utc)->format('Y-m-d\TH:i:s.u\Z');
