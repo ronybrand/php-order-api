@@ -24,6 +24,8 @@ use Ramsey\Uuid\Uuid;
 
 final class StoreTest extends DatabaseTestCase
 {
+    private const string TAX_ID = '12345678';
+
     private PostgresStore $store;
 
     private DateTimeImmutable $now;
@@ -35,7 +37,7 @@ final class StoreTest extends DatabaseTestCase
         $this->now = new DateTimeImmutable('2026-01-02T03:04:05Z');
     }
 
-    private function newCustomer(string $taxId = '12345678', ?string $passport = null): Customer
+    private function newCustomer(string $taxId = self::TAX_ID, ?string $passport = null): Customer
     {
         $customer = Customer::create(new CustomerInput('Ana', $taxId, $passport, 'ana@example.com'), 'tester', $this->now);
         $this->store->repos()->customers->create($customer);
@@ -65,12 +67,12 @@ final class StoreTest extends DatabaseTestCase
 
     public function test_a_customer_round_trips_with_a_database_generated_id(): void
     {
-        $created = $this->newCustomer('12345678', 'AB123456');
+        $created = $this->newCustomer(self::TAX_ID, 'AB123456');
 
         $loaded = $this->store->repos()->customers->get((string) $created->id);
 
         self::assertTrue(Uuid::isValid((string) $loaded->id));
-        self::assertSame('12345678', $loaded->taxId);
+        self::assertSame(self::TAX_ID, $loaded->taxId);
         self::assertSame('AB123456', $loaded->passportNumber);
         self::assertSame(1, $loaded->version);
         self::assertEquals($this->now, $loaded->createdAt);
@@ -78,8 +80,8 @@ final class StoreTest extends DatabaseTestCase
 
     public function test_uniqueness_is_enforced_by_the_database_and_mapped_to_the_spec_codes(): void
     {
-        $this->newCustomer('12345678', 'AB123456');
-        $duplicateTax = Customer::create(new CustomerInput('B', '12345678', null, 'b@example.com'), 't', $this->now);
+        $this->newCustomer(self::TAX_ID, 'AB123456');
+        $duplicateTax = Customer::create(new CustomerInput('B', self::TAX_ID, null, 'b@example.com'), 't', $this->now);
         $duplicatePassport = Customer::create(new CustomerInput('C', '87654321', 'AB123456', 'c@example.com'), 't', $this->now);
 
         self::assertApiError(ErrorCode::DuplicateTaxId, fn() => $this->store->repos()->customers->create($duplicateTax));
@@ -89,13 +91,13 @@ final class StoreTest extends DatabaseTestCase
     public function test_a_soft_deleted_customer_is_hidden_and_releases_its_unique_values(): void
     {
         $customers = $this->store->repos()->customers;
-        $customer = $this->newCustomer('12345678');
+        $customer = $this->newCustomer(self::TAX_ID);
 
         $customers->softDelete((string) $customer->id, 'admin', $this->now);
 
         self::assertApiError(ErrorCode::CustomerNotFound, fn() => $customers->get((string) $customer->id));
-        self::assertFalse($customers->taxIdTaken('12345678', null));
-        self::assertNotSame($customer->id, $this->newCustomer('12345678')->id);
+        self::assertFalse($customers->taxIdTaken(self::TAX_ID, null));
+        self::assertNotSame($customer->id, $this->newCustomer(self::TAX_ID)->id);
     }
 
     public function test_update_checks_the_version(): void
@@ -104,8 +106,8 @@ final class StoreTest extends DatabaseTestCase
         $created = $this->newCustomer();
         $stale = $customers->get((string) $created->id);
         $fresh = $customers->get((string) $created->id);
-        $fresh->replace(new CustomerInput('New', '12345678', null, 'n@example.com'), 'u', $this->now);
-        $stale->replace(new CustomerInput('Old', '12345678', null, 'o@example.com'), 'u', $this->now);
+        $fresh->replace(new CustomerInput('New', self::TAX_ID, null, 'n@example.com'), 'u', $this->now);
+        $stale->replace(new CustomerInput('Old', self::TAX_ID, null, 'o@example.com'), 'u', $this->now);
 
         $customers->update($fresh);
 
@@ -236,7 +238,13 @@ final class StoreTest extends DatabaseTestCase
         $customer = $this->newCustomer();
         $id = (string) $customer->id;
         // connectUsing skips the DB_URL parsing the default connection goes through, so do it here.
-        $config = (new ConfigurationUrlParser())->parseConfiguration((array) config('database.connections.pgsql'));
+        $connection = config('database.connections.pgsql');
+        self::assertIsArray($connection);
+        $options = [];
+        foreach ($connection as $key => $value) {
+            $options[(string) $key] = $value;
+        }
+        $config = (new ConfigurationUrlParser())->parseConfiguration($options);
         $other = DB::connectUsing('second', $config, true);
         $other->statement("SET lock_timeout = '300ms'");
         $otherStore = new PostgresStore($other);
