@@ -1,0 +1,11 @@
+/vendor/
+/.phpunit.cache/
+/.phpstan.cache/
+/.php-cs-fixer.cache
+/coverage/
+.env
+*.pem
+!tests/fixtures/*.pem
+/keys/
+.idea/
+.vscode/
