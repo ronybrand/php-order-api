@@ -61,26 +61,18 @@ Erros: `{"message", "code", "params", "request_id"}`; o catálogo está no OpenA
 
 ```mermaid
 flowchart LR
-    Cmd["AppServiceProvider e OrdersWork
-(composição e worker)"]
+    Cmd["AppServiceProvider e OrdersWork\n(composição e worker)"]
 
     subgraph Adapters["Adaptadores"]
         direction TB
-        Http["Http
-(Controllers, Middleware)"]
-        Pg["Infrastructure/Postgres
-(SQL explícito)"]
-        Msg["Infrastructure/Messaging
-(php-amqplib, e-mail)"]
-        Auth["Auth
-(JWT RS256)"]
+        Http["Http\n(Controllers, Middleware)"]
+        Pg["Infrastructure/Postgres\n(SQL explícito)"]
+        Msg["Infrastructure/Messaging\n(php-amqplib, e-mail)"]
+        Auth["Auth\n(JWT RS256)"]
     end
 
-    App["Application
-serviços e contratos
-(Store, EventPublisher)"]
-    Domain["Domain
-Customer, Order, Item, erros"]
+    App["Application\nserviços e contratos\n(Store, EventPublisher)"]
+    Domain["Domain\nCustomer, Order, Item, erros"]
 
     Cmd -. compõe .-> Adapters
     Http -- depende de --> App
@@ -96,19 +88,14 @@ A dependência aponta sempre para dentro: o domínio não conhece nada, a aplica
 
 ```mermaid
 flowchart LR
-    Client["Cliente"] -->|HTTPS| MW["Middleware
-request id, cabeçalhos de segurança,
-CORS, limite de corpo, rate limit"]
-    MW --> Authn["JWT RS256
-+ papel"]
+    Client["Cliente"] -->|HTTPS| MW["Middleware\nrequest id, cabeçalhos de segurança,\nCORS, limite de corpo, rate limit"]
+    MW --> Authn["JWT RS256\n+ papel"]
     Authn --> Handler["Controllers (Http)"]
     Handler --> Service["Serviços (Application)"]
     Service --> Store["PostgresStore"]
     Store --> DB[("PostgreSQL")]
-    Service -->|"após o commit
-(best effort, sem outbox)"| Pub["AmqpPublisher"]
-    Pub --> Queue[["RabbitMQ
-order.status.changed"]]
+    Service -->|"após o commit\n(best effort, sem outbox)"| Pub["AmqpPublisher"]
+    Pub --> Queue[["RabbitMQ\norder.status.changed"]]
     Queue --> Worker["Worker (php artisan orders:work)"]
     Worker --> Mail(["SMTP: e-mail do cliente"])
     Worker -. "retry / DLQ" .-> Queue
