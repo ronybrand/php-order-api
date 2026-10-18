@@ -57,6 +57,65 @@ Erros: `{"message", "code", "params", "request_id"}`; o catálogo está no OpenA
 - Criar pedido toma `FOR SHARE` no cliente e excluir cliente toma `FOR UPDATE`, na mesma transação da verificação de pedidos ativos: nunca nasce pedido sob um cliente excluído (teste de integração com segunda conexão e `lock_timeout`).
 - Unicidade de documento e passaporte é garantida por índices únicos parciais (`WHERE deleted_at IS NULL`); a checagem no service só dá a mensagem amigável.
 
+## Arquitetura
+
+```mermaid
+flowchart LR
+    Cmd["AppServiceProvider e OrdersWork
+(composição e worker)"]
+
+    subgraph Adapters["Adaptadores"]
+        direction TB
+        Http["Http
+(Controllers, Middleware)"]
+        Pg["Infrastructure/Postgres
+(SQL explícito)"]
+        Msg["Infrastructure/Messaging
+(php-amqplib, e-mail)"]
+        Auth["Auth
+(JWT RS256)"]
+    end
+
+    App["Application
+serviços e contratos
+(Store, EventPublisher)"]
+    Domain["Domain
+Customer, Order, Item, erros"]
+
+    Cmd -. compõe .-> Adapters
+    Http -- depende de --> App
+    Pg -- depende de --> App
+    Msg -- depende de --> App
+    Http -- depende de --> Auth
+    App -- depende de --> Domain
+```
+
+A dependência aponta sempre para dentro: o domínio não conhece nada, a aplicação declara o que consome e os adaptadores implementam. O Laravel é só a casca HTTP e o contêiner; `Domain` e `Application` não conhecem o framework.
+
+**Uma requisição e o e-mail que ela dispara**
+
+```mermaid
+flowchart LR
+    Client["Cliente"] -->|HTTPS| MW["Middleware
+request id, cabeçalhos de segurança,
+CORS, limite de corpo, rate limit"]
+    MW --> Authn["JWT RS256
++ papel"]
+    Authn --> Handler["Controllers (Http)"]
+    Handler --> Service["Serviços (Application)"]
+    Service --> Store["PostgresStore"]
+    Store --> DB[("PostgreSQL")]
+    Service -->|"após o commit
+(best effort, sem outbox)"| Pub["AmqpPublisher"]
+    Pub --> Queue[["RabbitMQ
+order.status.changed"]]
+    Queue --> Worker["Worker (php artisan orders:work)"]
+    Worker --> Mail(["SMTP: e-mail do cliente"])
+    Worker -. "retry / DLQ" .-> Queue
+```
+
+A API e o worker são dois processos independentes, ligados só pela fila. Se o broker estiver fora do ar, a transição do pedido continua válida e a falha só é registrada ([ADR sobre a ausência de outbox](docs/adr/0002-sem-outbox-transacional.md)).
+
 ## Desenvolvimento
 
 O projeto é escrito em TDD: o teste falha antes do código existir.
