@@ -35,3 +35,8 @@ updates:
     # within hours, and security updates are not delayed by this.
     cooldown:
       default-days: 3
+    open-pull-requests-limit: 10
+    groups:
+      weekly-batch:
+        patterns:
+          - "*"
