@@ -7,7 +7,7 @@
     "require": {
         "php": "^8.4",
         "ext-pdo_pgsql": "*",
-        "brick/math": "^0.14",
+        "brick/math": "^1.0",
         "firebase/php-jwt": "^7.0",
         "laravel/framework": "^13.17",
         "php-amqplib/php-amqplib": "^3.7",
@@ -19,7 +19,7 @@
         "laravel/pint": "^1.27",
         "mockery/mockery": "^1.6",
         "phpstan/phpstan-strict-rules": "^2.0",
-        "phpunit/phpunit": "^12.5.12"
+        "phpunit/phpunit": "^13.4.6"
     },
     "autoload": {
         "psr-4": {
