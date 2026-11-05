@@ -6,7 +6,7 @@ RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist --no-in
 COPY . .
 RUN composer dump-autoload --no-dev --optimize --classmap-authoritative --no-scripts
 
-FROM php@sha256:f1bf3e9358dcde762d06df6d54fb213344491a2b31db0aef456ffe6274c91dc6
+FROM php@sha256:9236fd373d3bcda0659cf94838a744bd79791419292958963f8c6b34a0071554
 RUN apk add --no-cache --virtual .build-deps postgresql-dev linux-headers $PHPIZE_DEPS \
     && apk add --no-cache libpq \
     && docker-php-ext-install pdo_pgsql sockets \
